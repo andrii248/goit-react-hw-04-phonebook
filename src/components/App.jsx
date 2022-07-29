@@ -1,43 +1,32 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import ContactForm from './ContactForm';
 import Filter from './Filter';
 import ContactList from './ContactList';
 
-class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+const contactsList = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
+
+export default function App() {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(window.localStorage.getItem('contacts')) ?? contactsList
+  );
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const onSubmit = newContact => {
+    setContacts([...contacts, newContact]);
   };
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  onSubmit = newContact => {
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-    }));
-  };
-
-  checkNewContact = newContact => {
+  const checkNewContact = newContact => {
     if (
-      this.state.contacts.find(
+      contacts.find(
         contact =>
           contact.name.toLocaleLowerCase() ===
           newContact.name.toLocaleLowerCase()
@@ -49,39 +38,28 @@ class App extends Component {
     return false;
   };
 
-  onChangeFilter = async e => {
-    await this.setState({ filter: e.target.value });
+  const onChangeFilter = e => {
+    setFilter(e.target.value);
   };
 
-  dltContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const dltContact = id => {
+    setContacts(prevState => prevState.filter(contact => contact.id !== id));
   };
 
-  render() {
-    const { contacts, filter } = this.state;
-    const normalizeFilter = filter.toLocaleLowerCase();
-    const availableContacts = contacts.filter(contact =>
-      contact.name.toLocaleLowerCase().includes(normalizeFilter)
-    );
+  const availableContacts = contacts.filter(contact =>
+    contact.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())
+  );
 
-    return (
-      <div className="main">
-        <h1>Phonebook</h1>
-        <ContactForm
-          onSubmit={this.onSubmit}
-          checkNewContact={this.checkNewContact}
-        />
-        <h2>Contacts</h2>
-        <Filter filter={filter} onChange={this.onChangeFilter} />
-        <ContactList
-          availableContacts={availableContacts}
-          dltContact={this.dltContact}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className="main">
+      <h1>Phonebook</h1>
+      <ContactForm onSubmit={onSubmit} checkNewContact={checkNewContact} />
+      <h2>Contacts</h2>
+      <Filter filter={filter} onChange={onChangeFilter} />
+      <ContactList
+        availableContacts={availableContacts}
+        dltContact={dltContact}
+      />
+    </div>
+  );
 }
-
-export default App;
